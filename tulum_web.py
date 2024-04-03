@@ -18,8 +18,6 @@ RFR = load('modelo_RFR.joblib')
 XGB = load('modelo_XGB.joblib')
 
 
-
-
 # Título de la aplicación
 st.markdown('<h1><center>Modelos de Regresión con Machine Learning</center></h1>',unsafe_allow_html=True)
 st.write("<h3><center>Luis Armando García Rodríguez (GARMA)</center><h2>",unsafe_allow_html=True)
@@ -139,26 +137,34 @@ pruebas = pd.read_csv("df_pruebas.csv")
 pruebas.drop("Unnamed: 0", axis=1, inplace=True)
 st.write(pruebas)
 # Recolección de entradas del usuario
-st.write('<p><h4>Introduce los atributos del alquiler (Haz click en la casilla si el valor en la variable es 1)</h4><p>',unsafe_allow_html=True)
+# Comienzo del formulario
+with st.form(key='mi_formulario'):
+    st.write('<p><h4>Introduce los atributos del alquiler (Haz click en la casilla si el valor en la variable es 1)</h4><p>', unsafe_allow_html=True)
+    
+    # Variables continuas y discretas dentro del formulario
+    vistaalmar = st.checkbox('¿Tiene vista al mar?')
+    superficie = st.number_input('Superficie (en metros cuadrados)', min_value=0.0, value=30.00, max_value=1000.0,step=1.00)
+    capacidad = st.number_input('Capacidad (número de personas)', min_value=1, value=2, max_value=4)
+    aire_ac = st.checkbox('¿Tiene aire acondicionado?')
+    wifi = st.checkbox('¿Tiene Wi-Fi?')
+    balcon = st.checkbox('¿Tiene balcón?')
+    terraza = st.checkbox('¿Tiene terraza?')
+    pueblo = st.checkbox('¿Está en el pueblo?')
+    tv = st.checkbox('¿Tiene TV?')
+    alberca = st.checkbox('¿Tiene alberca?')
+    estacionamiento = st.checkbox('¿Tiene estacionamiento?')
+    gym = st.checkbox('¿Tiene gimnasio?')
+    bar = st.checkbox('¿Tiene bar?')
 
-# Variables continuas y discretas
-vistaalmar = st.checkbox('¿Tiene vista al mar?')
-superficie = st.number_input('Superficie (en metros cuadrados)', min_value=0.0, value=30.00, max_value=1000.0)
-capacidad = st.number_input('Capacidad (número de personas)', min_value=1, value=2,max_value=4)
-aire_ac = st.checkbox('¿Tiene aire acondicionado?')
-wifi = st.checkbox('¿Tiene Wi-Fi?')
-balcon = st.checkbox('¿Tiene balcon?')
-terraza = st.checkbox('¿Tiene terraza?')
-pueblo = st.checkbox('¿Está en el pueblo?')
-tv = st.checkbox('¿Tiene tv?')
-alberca = st.checkbox('¿Tiene alberca?')
-estacionamiento = st.checkbox('¿Tiene estacionamiento?')
-gym = st.checkbox('¿Tiene gimnasio?')
-bar = st.checkbox('¿Tiene bar?')
+    # Botón de envío del formulario
+    enviar = st.form_submit_button(label='Estimar con Modelos de Machine Learning')
 
-# Botón para realizar predicción
-if st.button('Estimar con Modelos de Machine Learning'):
-    #Cargar precios totales
+# Procesar la entrada una vez que se envía el formulario
+if enviar:
+    # Aquí iría el resto de tu lógica para realizar las predicciones
+    # Por ejemplo, preprocesar las entradas y luego usar tus modelos cargados para hacer predicciones
+    st.write('Realizando estimaciones...')
+
     precios = pd.read_csv("precios_totales.csv")
 
     #Cargar scaler y estandarizar datos de entrada
@@ -348,7 +354,6 @@ if st.button('Estimar con Modelos de Machine Learning'):
                    <li>Pal, S. K., & Mitra, S. (2009). Random Forest Ensemble Learning for Credit Scoring. Expert Systems with Applications, 36(6), 2669-2678.</li>
                    <li>Chen, T., & Guestrin, C. (2016). XGBoost: A Scalable Machine Learning Algorithm for Tree Boosting. In Proceedings of the 22nd ACM International Conference on Knowledge Discovery and Data Mining (pp. 785-796). ACM.</li>
                 </ul>""",unsafe_allow_html=True)
-    
     
     
 
