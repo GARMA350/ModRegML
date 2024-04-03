@@ -21,8 +21,8 @@ XGB = load('modelo_XGB.joblib')
 
 
 # Título de la aplicación
-st.markdown('<h1>Modelos de Regresión con Machine Learning</h1>',unsafe_allow_html=True)
-st.write("<h3>Luis Armando García Rodríguez (GARMA)<h2>",unsafe_allow_html=True)
+st.markdown('<h1><center>Modelos de Regresión con Machine Learning</center></h1>',unsafe_allow_html=True)
+st.write("<h3><center>Luis Armando García Rodríguez (GARMA)</center><h2>",unsafe_allow_html=True)
 
 st.write("""
          <style>
