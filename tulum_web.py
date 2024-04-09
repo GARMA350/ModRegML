@@ -138,12 +138,14 @@ pruebas.drop("Unnamed: 0", axis=1, inplace=True)
 st.write(pruebas)
 # Recolección de entradas del usuario
 # Comienzo del formulario
+
 with st.form(key='mi_formulario'):
     st.write('<p><h4>Introduce los atributos del alquiler (Haz click en la casilla si el valor en la variable es 1)</h4><p>', unsafe_allow_html=True)
     
     # Variables continuas y discretas dentro del formulario
+    modelo_seleccionado = st.selectbox("Elige un modelo",["Regresión Lineal","SVR","RFR","XGBoost"])
     vistaalmar = st.checkbox('¿Tiene vista al mar?')
-    superficie = st.number_input('Superficie (en metros cuadrados)', min_value=0.0, value=30.00, max_value=1000.0,step=1.00)
+    superficie = st.number_input('Superficie (en metros cuadrados)', min_value=0.0, value=30.00, max_value=1000.0, step=1.00)
     capacidad = st.number_input('Capacidad (número de personas)', min_value=1, value=2, max_value=4)
     aire_ac = st.checkbox('¿Tiene aire acondicionado?')
     wifi = st.checkbox('¿Tiene Wi-Fi?')
@@ -159,12 +161,9 @@ with st.form(key='mi_formulario'):
     # Botón de envío del formulario
     enviar = st.form_submit_button(label='Estimar con Modelos de Machine Learning')
 
+
 # Procesar la entrada una vez que se envía el formulario
 if enviar:
-    # Aquí iría el resto de tu lógica para realizar las predicciones
-    # Por ejemplo, preprocesar las entradas y luego usar tus modelos cargados para hacer predicciones
-    st.write('Realizando estimaciones...')
-
     precios = pd.read_csv("precios_totales.csv")
 
     #Cargar scaler y estandarizar datos de entrada
@@ -173,187 +172,193 @@ if enviar:
     pred_scale = scaler.transform(pred_df)
 
     #Modelo Lineal
-    
-    prediccion_OLS = OLS.predict(pred_scale)
-    prediccion_OLS = np.exp(prediccion_OLS)
-    prediccion_OLS= prediccion_OLS[0]
-    st.markdown("""
+
+    if modelo_seleccionado == "Regresión Lineal":
+        prediccion_OLS = OLS.predict(pred_scale)
+        prediccion_OLS = np.exp(prediccion_OLS)
+        prediccion_OLS= prediccion_OLS[0]
+        st.markdown("""
      <p><h4> Modelo - Regresión Lineal (OLS)</h4><p>
      <p><strong>Evaluación:</strong><p>
      <p><strong>MSE:</strong> 4009034.65, <strong>MEA:</strong> 1243.89, <strong>RMSE:</strong> 2002.25, <strong>:R²</strong>: 0.5485 <p>
      <p><strong>Estimación:</strong><p>
                 """,unsafe_allow_html=True)
-    st.write(f"El modelo de regresion lineal estima el precio de alquiler respectivo a los atributos proporcionados en {round(prediccion_OLS,2)} MXN")
-    st.markdown("<p><strong>Visualización del rendimento del modelo:</strong><p>",unsafe_allow_html=True)
-    precio_original = precios['precio_original']
-    precio_estimado_lineal = precios['precio_estimado_lineal']
-    observaciones = np.arange(len(precio_original))
-    plt.figure(figsize=(12, 6))
-    plt.scatter(observaciones, precio_original, color='#49007e', alpha=0.5, label='Precio Original')
-    plt.scatter(observaciones, precio_estimado_lineal, color='#0a0310', alpha=0.5, label='Precio Estimado OLS')
-    plt.title('Precios Originales vs. Precios Estimados por OLS')
-    plt.xlabel('Observación')
-    plt.ylabel('Precio')
-    plt.legend()
-    st.pyplot(plt)
+        st.write(f"El modelo de regresion lineal estima el precio de alquiler respectivo a los atributos proporcionados en <strong>{round(prediccion_OLS,2)} MXN </strong>",unsafe_allow_html=True)
+        st.markdown("<p><strong>Visualización del rendimento del modelo:</strong><p>",unsafe_allow_html=True)
+        precio_original = precios['precio_original']
+        precio_estimado_lineal = precios['precio_estimado_lineal']
+        observaciones = np.arange(len(precio_original))
+        plt.figure(figsize=(12, 6))
+        plt.scatter(observaciones, precio_original, color='#49007e', alpha=0.5, label='Precio Original')
+        plt.scatter(observaciones, precio_estimado_lineal, color='#0a0310', alpha=0.5, label='Precio Estimado OLS')
+        plt.title('Precios Originales vs. Precios Estimados por OLS')
+        plt.xlabel('Observación')
+        plt.ylabel('Precio')
+        plt.legend()
+        st.pyplot(plt)
 
-    precios = pd.read_csv('precios_totales.csv')
-    data = precios['error_lineal']
-    density = gaussian_kde(data)
-    density.covariance_factor = lambda : .25
-    density._compute_covariance()
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-    ax[0].hist(data, bins=30, alpha=0.5, color='#49007e')
-    ax[0].set_title('Hist. Residuos del modelo de regresion lineal')
-    x = np.linspace(min(data), max(data), 1000)
-    ax[1].plot(x, density(x), color='#0a0310')
-    ax[1].set_title('Dens. Residuos del modelo de regresión lineal')
-    plt.tight_layout()
-    st.pyplot(fig)
+        precios = pd.read_csv('precios_totales.csv')
+        data = precios['error_lineal']
+        density = gaussian_kde(data)
+        density.covariance_factor = lambda : .25
+        density._compute_covariance()
+        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+        ax[0].hist(data, bins=30, alpha=0.5, color='#49007e')
+        ax[0].set_title('Hist. Residuos del modelo de regresion lineal')
+        x = np.linspace(min(data), max(data), 1000)
+        ax[1].plot(x, density(x), color='#0a0310')
+        ax[1].set_title('Dens. Residuos del modelo de regresión lineal')
+        plt.tight_layout()
+        st.pyplot(fig)
 
-    st.markdown("""
-                  <p>Al comparar las estimaciones del modelo de regresión por OLS con los valores reales, habrás notado que la diferencia es abismal, y que para este conjunto de datos, este modelo no funciona debido a la no linealidad en las relaciones entre los datos. Además, al visualizar la distribución de los errores, notarás que está cargada a la izquierda, con mayor peso en los errores negativos, lo que indica que el modelo subestimó, y que, en general, las estimaciones están por debajo del precio real. Sigue avanzando y observa cómo los siguientes modelos mejoran progresivamente su desempeño.</p>
+        st.markdown("""
+                  <p>Al comparar las estimaciones del modelo de regresión lineal con los valores reales, habrás notado que la diferencia es abismal, y que para este conjunto de datos, este modelo no funciona debido a la no linealidad en las relaciones entre los datos. Además, al visualizar la distribución de los errores, notarás que está cargada a la derecha, con mayor peso en los errores positivos, lo que indica que el modelo subestimó, y que, en general, las estimaciones están por debajo del precio real. Las metricas de evaluación del error del modelo son muy altas, y su R<sup>2</sup> es muy bajo, por lo que no se desempeña correctamente.</p>
                 """,unsafe_allow_html=True)
     
 
     #Modelo SVR
-  
-    prediccion_SVR = SVR.predict(pred_scale)
-    prediccion_SVR = np.exp(prediccion_SVR)
-    prediccion_SVR= prediccion_SVR[0]
-    st.markdown("""
+
+    elif modelo_seleccionado == "SVR":
+        prediccion_SVR = SVR.predict(pred_scale)
+        prediccion_SVR = np.exp(prediccion_SVR)
+        prediccion_SVR= prediccion_SVR[0]
+        st.markdown("""
      <p><h4> Modelo: SVR - Support Vector Regression (Regresiones de Soporte Vectorial)</h4><p>
      <p><strong>Evaluación:</strong><p>
      <p><strong>MSE:</strong> 3314195.50, <strong>MEA:</strong> 959.28, <strong>RMSE:</strong> 1820.49, <strong>:R²</strong>: 0.6268 <p>
      <p><strong>Estimación:</strong><p>
                 """,unsafe_allow_html=True)
-    st.write(f"El modelo SVR estima el precio de alquiler respectivo a los atributos proporcionados en {round(prediccion_SVR,2)} MXN")
-    st.markdown("<p><strong>Visualización del rendimento del modelo:</strong><p>",unsafe_allow_html=True)
-    precio_original = precios['precio_original']
-    precio_estimado_SVR = precios['precio_estimado_SVR']
-    observaciones = np.arange(len(precio_original))
-    plt.figure(figsize=(12, 6))  # Ajusta el tamaño de la gráfica según necesites
-    plt.scatter(observaciones, precio_original, color='#49007e', alpha=0.5, label='Precio Original')
-    plt.scatter(observaciones, precio_estimado_SVR, color='#ffb238', alpha=0.5, label='Precio Estimado SVR')
-    plt.title('Precios Originales vs. Precios Estimados por SVR')
-    plt.xlabel('Observación')
-    plt.ylabel('Precio')
-    plt.legend()
-    st.pyplot(plt)
+        st.write(f"El modelo SVR estima el precio de alquiler respectivo a los atributos proporcionados en <strong>{round(prediccion_SVR,2)} MXN </strong>",unsafe_allow_html=True)
+        st.markdown("<p><strong>Visualización del rendimento del modelo:</strong><p>",unsafe_allow_html=True)
+        precio_original = precios['precio_original']
+        precio_estimado_SVR = precios['precio_estimado_SVR']
+        observaciones = np.arange(len(precio_original))
+        plt.figure(figsize=(12, 6))  # Ajusta el tamaño de la gráfica según necesites
+        plt.scatter(observaciones, precio_original, color='#49007e', alpha=0.5, label='Precio Original')
+        plt.scatter(observaciones, precio_estimado_SVR, color='#ffb238', alpha=0.5, label='Precio Estimado SVR')
+        plt.title('Precios Originales vs. Precios Estimados por SVR')
+        plt.xlabel('Observación')
+        plt.ylabel('Precio')
+        plt.legend()
+        st.pyplot(plt)
 
-    precios = pd.read_csv('precios_totales.csv')
-    data = precios['error_SVG']
-    density = gaussian_kde(data)
-    density.covariance_factor = lambda : .25
-    density._compute_covariance()
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-    ax[0].hist(data, bins=30, alpha=0.5, color='#49007e')
-    ax[0].set_title('Hist. Residuos del modelo SVR')
-    x = np.linspace(min(data), max(data), 1000)
-    ax[1].plot(x, density(x), color='#ffb238')
-    ax[1].set_title('Dens. Residuos del modelo SVR')
-    plt.tight_layout()
-    st.pyplot(fig)
+        precios = pd.read_csv('precios_totales.csv')
+        data = precios['error_SVG']
+        density = gaussian_kde(data)
+        density.covariance_factor = lambda : .25
+        density._compute_covariance()
+        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+        ax[0].hist(data, bins=30, alpha=0.5, color='#49007e')
+        ax[0].set_title('Hist. Residuos del modelo SVR')
+        x = np.linspace(min(data), max(data), 1000)
+        ax[1].plot(x, density(x), color='#ffb238')
+        ax[1].set_title('Dens. Residuos del modelo SVR')
+        plt.tight_layout()
+        st.pyplot(fig)
 
-    st.markdown("""
-                 <p>Como ya te habrás dado cuenta, el SVR ha mejorado significativamente los resultados del modelo de regresión lineal. Este no es precisamente el mejor modelo, pues aunque las métricas de error han disminuido significativamente, el R<sup>2</sup> de 0.62 sigue siendo poco aceptable. Si miras la gráfica de comparación de los precios y la distribución de los errores, notarás que este modelo tiene algunos errores positivos, que nos indican que no ha logrado ajustarse a los datos idóneamente. Si bien parece ser un modelo robusto, no es el que mejor estimaciones realiza, y aún tiene margen de mejora.</p>
+        st.markdown("""
+                 <p>El modelo SVR ha mejorado significativamente los resultados del modelo de regresión lineal. Este no es precisamente el mejor modelo, pues aunque las métricas de error han disminuido significativamente, el R<sup>2</sup> de 0.62 sigue siendo poco aceptable. Si miras la gráfica de comparación de los precios y la distribución de los errores, notarás que este modelo tiene algunos errores positivos, que nos indican que no ha logrado ajustarse a los datos idóneamente, y sigue teniendo algunos problemas de subestimación. Este no es el modelo que mejores estimaciones realiza, pues aún tiene margen de mejora considerable.</p>
                 """,unsafe_allow_html=True)
-
-
-
-    #Modelo RFR
-    RFR = load('modelo_RFR.joblib')
-    prediccion_RFR = RFR.predict(pred_scale)
-    prediccion_RFR = np.exp(prediccion_RFR)
-    prediccion_RFR= prediccion_RFR[0]
-    st.markdown("""
+        
+    elif modelo_seleccionado == "RFR":
+        prediccion_RFR = RFR.predict(pred_scale)
+        prediccion_RFR = np.exp(prediccion_RFR)
+        prediccion_RFR= prediccion_RFR[0]
+        st.markdown("""
      <p><h4> Modelo: RFR - Random Forest Regression (Bosques aleatorios de Regresión)</h4><p>
      <p><strong>Evaluación:</strong><p>
      <p><strong>MSE:</strong> 1536365.26, <strong>MEA:</strong> 815.84, <strong>RMSE:</strong> 1239.50, <strong>:R²</strong>: 0.8269 <p>
      <p><strong>Estimación:</strong><p>
                 """,unsafe_allow_html=True)
-    st.write(f"El modelo RFR estima el precio de alquiler respectivo a los atributos proporcionados en {round(prediccion_RFR,2)} MXN")
-    st.markdown("<p><strong>Visualización del rendimento del modelo:</strong><p>",unsafe_allow_html=True)
-    precio_original = precios['precio_original']
-    precio_estimado_RFR = precios['precio_estimado_RFR']
-    observaciones = np.arange(len(precio_original))
-    plt.figure(figsize=(12, 6))  # Ajusta el tamaño de la gráfica según necesites
-    plt.scatter(observaciones, precio_original, color='#49007e', alpha=0.5, label='Precio Original')
-    plt.scatter(observaciones, precio_estimado_RFR, color='#ff005b', alpha=0.5, label='Precio Estimado RFR')
-    plt.title('Precios Originales vs. Precios Estimados por RFR')
-    plt.xlabel('Observación')
-    plt.ylabel('Precio')
-    plt.legend()
-    st.pyplot(plt)
+        st.write(f"El modelo RFR estima el precio de alquiler respectivo a los atributos proporcionados en <strong>{round(prediccion_RFR,2)} MXN </strong>",unsafe_allow_html=True)
+        st.markdown("<p><strong>Visualización del rendimento del modelo:</strong><p>",unsafe_allow_html=True)
+        precio_original = precios['precio_original']
+        precio_estimado_RFR = precios['precio_estimado_RFR']
+        observaciones = np.arange(len(precio_original))
+        plt.figure(figsize=(12, 6))  # Ajusta el tamaño de la gráfica según necesites
+        plt.scatter(observaciones, precio_original, color='#49007e', alpha=0.5, label='Precio Original')
+        plt.scatter(observaciones, precio_estimado_RFR, color='#ff005b', alpha=0.5, label='Precio Estimado RFR')
+        plt.title('Precios Originales vs. Precios Estimados por RFR')
+        plt.xlabel('Observación')
+        plt.ylabel('Precio')
+        plt.legend()
+        st.pyplot(plt)
 
-    precios = pd.read_csv('precios_totales.csv')
-    data = precios['error_RFR']
-    density = gaussian_kde(data)
-    density.covariance_factor = lambda : .25
-    density._compute_covariance()
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-    ax[0].hist(data, bins=30, alpha=0.5, color='#49007e')
-    ax[0].set_title('Hist. Residuos del modelo RFR')
-    x = np.linspace(min(data), max(data), 1000)
-    ax[1].plot(x, density(x), color='#ff005b')
-    ax[1].set_title('Dens. Residuos del modelo RFR')
-    plt.tight_layout()
-    st.pyplot(fig)
+        precios = pd.read_csv('precios_totales.csv')
+        data = precios['error_RFR']
+        density = gaussian_kde(data)
+        density.covariance_factor = lambda : .25
+        density._compute_covariance()
+        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+        ax[0].hist(data, bins=30, alpha=0.5, color='#49007e')
+        ax[0].set_title('Hist. Residuos del modelo RFR')
+        x = np.linspace(min(data), max(data), 1000)
+        ax[1].plot(x, density(x), color='#ff005b')
+        ax[1].set_title('Dens. Residuos del modelo RFR')
+        plt.tight_layout()
+        st.pyplot(fig)
 
-    st.markdown("""
-                 <p>El modelo RFR ha mejorado sus métricas en gran medida en comparación con los dos modelos anteriores; el MSE, MAE y RMSE son mucho más bajos, y el R<sup>2</sup> ha mejorado a 0.82, lo cual es un gran indicador de evaluación. Al realizar estimaciones, los valores son bastante cercanos al valor real. Si nos fijamos en la distribución de los errores, notamos cómo también tiene algunos problemas de sobreestimación, que sin embargo son bastante menores a los del modelo SVR.</p>
+        st.markdown("""
+                 <p>El modelo RFR ha mejorado sus métricas en gran medida en comparación con los modelos de regresión lineal y SVR; el MSE, MAE y RMSE son mucho más bajos, y el R<sup>2</sup> ha mejorado a 0.82, lo cual es un gran indicador de evaluación. Al realizar estimaciones, los valores son bastante cercanos al valor real. Y si nos fijamos en la distribución de los errores, notamos cómo también tiene algunos problemas de sobrestimación, que sin embargo son bastante menores a los del modelo SVR.</p>
                 """,unsafe_allow_html=True)
 
     #Modelo XGB
+
+    elif modelo_seleccionado == "XGBoost":
     
-    prediccion_XGB = XGB.predict(pred_scale)
-    prediccion_XGB = np.exp(prediccion_XGB)
-    prediccion_XGB= prediccion_XGB[0]
-    prediccion_XGB_formateada = format(prediccion_XGB, ".2f")
-    st.markdown("""
+        prediccion_XGB = XGB.predict(pred_scale)
+        prediccion_XGB = np.exp(prediccion_XGB)
+        prediccion_XGB= prediccion_XGB[0]
+        prediccion_XGB_formateada = format(prediccion_XGB, ".2f")
+        st.markdown("""
      <p><h4> Modelo: XGBoost (eXtreme Gradient Boosting)</h4><p>
      <p><strong>Evaluación:</strong><p>
      <p><strong>MSE:</strong> 857661.43, <strong>MEA:</strong> 563.08, <strong>RMSE:</strong> 926.10, <strong>:R²</strong>: 0.9034 <p>
      <p><strong>Estimación:</strong><p>
                 """,unsafe_allow_html=True)
-    st.write(f"El modelo XGB estima el precio de alquiler respectivo a los atributos proporcionados en {prediccion_XGB_formateada} MXN")
-    st.markdown("<p><strong>Visualización del rendimento del modelo:</strong><p>",unsafe_allow_html=True)
-    precio_original = precios['precio_original']
-    precio_estimado_XGB = precios['precio_estimado_XGB']
-    observaciones = np.arange(len(precio_original))
-    plt.figure(figsize=(12, 6))  # Ajusta el tamaño de la gráfica según necesites
-    plt.scatter(observaciones, precio_original, color='#49007e', alpha=0.5, label='Precio Original')
-    plt.scatter(observaciones, precio_estimado_XGB, color='#ff7d10', alpha=0.5, label='Precio Estimado XGB')
-    plt.title('Precios Originales vs. Precios Estimados por XGB')
-    plt.xlabel('Observación')
-    plt.ylabel('Precio')
-    plt.legend()
-    st.pyplot(plt)
+        st.write(f"El modelo XGB estima el precio de alquiler respectivo a los atributos proporcionados en <strong>{prediccion_XGB_formateada} MXN </strong> MXN",unsafe_allow_html=True)
+        st.markdown("<p><strong>Visualización del rendimento del modelo:</strong><p>",unsafe_allow_html=True)
+        precio_original = precios['precio_original']
+        precio_estimado_XGB = precios['precio_estimado_XGB']
+        observaciones = np.arange(len(precio_original))
+        plt.figure(figsize=(12, 6))  # Ajusta el tamaño de la gráfica según necesites
+        plt.scatter(observaciones, precio_original, color='#49007e', alpha=0.5, label='Precio Original')
+        plt.scatter(observaciones, precio_estimado_XGB, color='#ff7d10', alpha=0.5, label='Precio Estimado XGB')
+        plt.title('Precios Originales vs. Precios Estimados por XGB')
+        plt.xlabel('Observación')
+        plt.ylabel('Precio')
+        plt.legend()
+        st.pyplot(plt)
 
-    precios = pd.read_csv('precios_totales.csv')
-    data = precios['error_XGB']
-    density = gaussian_kde(data)
-    density.covariance_factor = lambda : .25
-    density._compute_covariance()
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-    ax[0].hist(data, bins=30, alpha=0.5, color='#ff7d10')
-    ax[0].set_title('Hist. Residuos del modelo de XGB')
-    x = np.linspace(min(data), max(data), 1000)
-    ax[1].plot(x, density(x), color='#49007e')
-    ax[1].set_title('Dens. Residuos del modelo XGB')
-    plt.tight_layout()
-    st.pyplot(fig)
+        precios = pd.read_csv('precios_totales.csv')
+        data = precios['error_XGB']
+        density = gaussian_kde(data)
+        density.covariance_factor = lambda : .25
+        density._compute_covariance()
+        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+        ax[0].hist(data, bins=30, alpha=0.5, color='#ff7d10')
+        ax[0].set_title('Hist. Residuos del modelo de XGB')
+        x = np.linspace(min(data), max(data), 1000)
+        ax[1].plot(x, density(x), color='#49007e')
+        ax[1].set_title('Dens. Residuos del modelo XGB')
+        plt.tight_layout()
+        st.pyplot(fig)
 
+        st.markdown("""
+                <p>El modelo XGBoost ha hecho un gran trabajo en la estimación, como puede verse en las métricas, pues el MSE, MAE y RMSE son los más pequeños entre todos los modelos desarrollados, y el R<sup>2</sup> es de 0.9034, lo que es un excelente indicador. Las estimaciones son las más cercanas a los valores reales, y al mirar la distribución de los residuos, observamos que los problemas de subestimación se han reducido drasticamente, por lo que sin duda estamos frente a un gran modelo.</p>""",unsafe_allow_html=True)
+        
+        
     st.markdown("""
-                <p>El modelo XGBoost ha hecho un gran trabajo en la estimación, como puede verse en las métricas, pues el MSE, MAE y RMSE son más pequeños, y el R<sup>2</sup> es de 0.9034, lo que es un excelente indicador. Las estimaciones son más cercanas a los valores reales y al mirar la distribución de los residuos, observamos que los problemas de sobreestimación se han reducido significativamente.</p>
-                <h4>Conclusiones</h4>
-                <p>Finalmente, hemos identificado la capacidad y superioridad de los modelos de regresión de Machine Learning frente a algunos modelos clásicos y tradicionales de la estadística. Ningún modelo es malo; simplemente, no todos los modelos son flexibles ni capaces de modelar relaciones complejas. Los modelos de Machine Learning se distinguen por su capacidad de abordar estas relaciones complejas y no lineales, por lo que se presentan como una gran alternativa para modelar fenómenos complejos de nuestra realidad.</p> 
-                <h4>Referencias</h4>
-                <ul>
-                   <li>Wu, D. C., Zhang, W., & Huang, X. (2010). Support Vector Regression for Predicting Customer Lifetime Value in E-commerce. Journal of the American Statistical Association, 105(472), 1177-1188.</li>
-                   <li>Pal, S. K., & Mitra, S. (2009). Random Forest Ensemble Learning for Credit Scoring. Expert Systems with Applications, 36(6), 2669-2678.</li>
-                   <li>Chen, T., & Guestrin, C. (2016). XGBoost: A Scalable Machine Learning Algorithm for Tree Boosting. In Proceedings of the 22nd ACM International Conference on Knowledge Discovery and Data Mining (pp. 785-796). ACM.</li>
-                </ul>""",unsafe_allow_html=True)
+<h4>Conclusiones</h4>
+                <p>Finalmente, hemos identificado la capacidad y superioridad de los modelos de regresión de Machine Learning frente a algunos modelos clásicos y tradicionales de la estadística. Ningún modelo es malo; simplemente, no todos los modelos son flexibles ni capaces de modelar relaciones complejas. Los modelos de Machine Learning se distinguen por su capacidad de abordar estas relaciones complejas y no lineales, por lo que se presentan como una gran alternativa para modelar fenómenos complejos de nuestra realidad. Aunque en general nuestros modelos presentaron problemas de subestimación, este se debe a que no dimos tratamiento a los outliers en el conjunto de datos, no realizamos dicho procedimento debido a que la intención de esta web es tambien mostrar el grado de robustes en los modelos de Machine Learning. A continuación se muestra una pequeña tabla comparativa entre los distintos modelos desarrollados y las metricas obtenidas por cada uno.</p>""",unsafe_allow_html=True)
+    metricas_df = pd.read_csv("metricas.csv")
+    st.write(metricas_df)
+    st.markdown("""<h4>Referencias</h4>
+                      <ul>
+                         <li>Wu, D. C., Zhang, W., & Huang, X. (2010). Support Vector Regression for Predicting Customer Lifetime Value in E-commerce. Journal of the American Statistical Association, 105(472), 1177-1188.</li>
+                         <li>Pal, S. K., & Mitra, S. (2009). Random Forest Ensemble Learning for Credit Scoring. Expert Systems with Applications, 36(6), 2669-2678.</li>
+                         <li>Chen, T., & Guestrin, C. (2016). XGBoost: A Scalable Machine Learning Algorithm for Tree Boosting. In Proceedings of the 22nd ACM International Conference on Knowledge Discovery and Data Mining (pp. 785-796). ACM.</li>
+                      </ul>""",unsafe_allow_html=True)
     
     
 

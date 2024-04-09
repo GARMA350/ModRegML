@@ -1,0 +1,5 @@
+Modelo,MSE(Mean Squared Error),MAE(Median Absolute Error),RMSE(Root Mean Squered Error),R2
+Lineal,4009034.65,1243.89,2002.25,0.55
+SVR,3314195.5,959.28,1820.49,0.63
+RFR,1536365.26,815.84,1239.5,0.82
+XGBoost,857661.43,563.08,926.1,0.90
